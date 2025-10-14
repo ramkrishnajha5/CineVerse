@@ -89,7 +89,7 @@ export function TrendingSection() {
             <h3 className="text-2xl font-display font-semibold">Trending Movies</h3>
             
             {/* Toggles - below title on mobile, right side on desktop */}
-            <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="flex items-center gap-2 flex-wrap justify-start md:justify-end">
               <Button
                 variant={movieRegion === 'world' ? 'default' : 'outline'}
                 size="sm"
@@ -155,7 +155,7 @@ export function TrendingSection() {
             <h3 className="text-2xl font-display font-semibold">Trending TV Shows & Web Series</h3>
             
             {/* Toggles - below title on mobile, right side on desktop */}
-            <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="flex items-center gap-2 flex-wrap justify-start md:justify-end">
               <Button
                 variant={tvRegion === 'world' ? 'default' : 'outline'}
                 size="sm"
@@ -221,7 +221,7 @@ export function TrendingSection() {
             <h3 className="text-2xl font-display font-semibold">Trending Anime</h3>
             
             {/* Toggles - below title on mobile, right side on desktop */}
-            <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="flex items-center gap-2 flex-wrap justify-start md:justify-end">
               <Button
                 variant={animeTimeWindow === 'day' ? 'default' : 'outline'}
                 size="sm"

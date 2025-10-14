@@ -1,20 +1,32 @@
 import { Movie, TVShow, MovieDetail, TVDetail, Credits, Videos, SearchResponse, TMDbResponse, PersonDetail, CombinedCredits } from '@/types/tmdb';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY || '2f0c4d355398a7cb7b60f0ffdb48222e';
-const BASE_URL = import.meta.env.DEV ? '/api/tmdb' : 'https://api.themoviedb.org/3';
+// Always use proxy to avoid mobile network blocking and CORS issues
+const BASE_URL = '/api/tmdb';
 const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
 class TMDbAPI {
   private async fetchFromTMDb<T>(endpoint: string): Promise<T> {
     const url = `${BASE_URL}${endpoint}${endpoint.includes('?') ? '&' : '?'}api_key=${API_KEY}`;
     
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`TMDb API Error: ${response.status} - ${response.statusText}`);
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('TMDb API Error:', response.status, errorText);
+        throw new Error(`TMDb API Error: ${response.status} - ${response.statusText}`);
+      }
+      
+      return response.json();
+    } catch (error: any) {
+      console.error('TMDb Fetch Error:', error.message);
+      throw error;
     }
-    
-    return response.json();
   }
 
   // Image URLs
