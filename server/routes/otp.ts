@@ -25,22 +25,35 @@ export function registerOTPRoutes(app: Express) {
         });
       }
 
-      // Rate limiting: check if OTP already exists
-      if (OTPManager.hasActiveOTP(email)) {
-        const remainingTime = Math.ceil(OTPManager.getRemainingTime(email) / 1000);
+      // Check if resend cooldown is active
+      const { allowed, waitMs } = OTPManager.canResendOTP(email);
+      
+      if (!allowed) {
+        const remainingSeconds = Math.ceil(waitMs / 1000);
         return res.status(429).json({ 
-          error: `OTP already sent. Please wait ${remainingTime} seconds or use the existing code.`,
-          remainingTime 
+          error: `Please wait ${remainingSeconds} seconds before requesting another OTP.`,
+          remainingTime: remainingSeconds 
         });
       }
 
-      // Generate OTP
-      const code = OTPManager.createOTP(email);
+      // Check if an active OTP exists (not expired)
+      let code: string;
+      let isResend = false;
+      
+      if (OTPManager.hasActiveOTP(email)) {
+        // Resend existing OTP if it's still valid
+        const result = OTPManager.resendOTP(email);
+        code = result.code;
+        isResend = !result.isNew;
+      } else {
+        // Generate new OTP
+        code = OTPManager.createOTP(email);
+      }
 
       // Send email
       try {
         await sendOtpEmail(email, code);
-        console.log(`[OTP API] Sent OTP to ${email}`);
+        console.log(`[OTP API] ${isResend ? 'Resent' : 'Sent'} OTP to ${email}`);
       } catch (emailError: any) {
         console.error('[OTP API] Failed to send email:', emailError);
         return res.status(500).json({ 
@@ -50,8 +63,11 @@ export function registerOTPRoutes(app: Express) {
 
       res.json({ 
         success: true,
-        message: 'OTP sent to your email. Valid for 10 minutes.',
-        expiresIn: 600 // seconds
+        message: isResend 
+          ? 'Same OTP resent to your email. Valid for 10 minutes.' 
+          : 'OTP sent to your email. Valid for 10 minutes.',
+        expiresIn: 600, // seconds
+        isResend
       });
     } catch (error: any) {
       console.error('[OTP API] Error in /api/otp/send:', error);

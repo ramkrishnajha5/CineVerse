@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -19,6 +19,7 @@ export default function Login() {
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpMessage, setOtpMessage] = useState("");
+  const [resendCountdown, setResendCountdown] = useState(0);
 
   // Check for verification error in URL
   const urlParams = new URLSearchParams(window.location.search);
@@ -29,21 +30,33 @@ export default function Login() {
     navigate("/");
   }
 
+  // Countdown timer effect
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setTimeout(() => {
+        setResendCountdown(resendCountdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCountdown]);
+
   const handleSendOTP = async () => {
     setError(null);
     setOtpMessage("");
     
-    // Validate password before sending OTP
-    const hasMinLen = password.length >= 8;
-    const hasUpper = /[A-Z]/.test(password);
-    const hasSymbol = /[^A-Za-z0-9]/.test(password);
-    if (!hasMinLen || !hasUpper || !hasSymbol) {
-      setError("Password must be at least 8 characters and include 1 uppercase and 1 symbol.");
-      return;
-    }
-    if (password !== confirm) {
-      setError("Passwords do not match");
-      return;
+    // Validate password before sending OTP (only on initial send, not resend)
+    if (!showOTPStep) {
+      const hasMinLen = password.length >= 8;
+      const hasUpper = /[A-Z]/.test(password);
+      const hasSymbol = /[^A-Za-z0-9]/.test(password);
+      if (!hasMinLen || !hasUpper || !hasSymbol) {
+        setError("Password must be at least 8 characters and include 1 uppercase and 1 symbol.");
+        return;
+      }
+      if (password !== confirm) {
+        setError("Passwords do not match");
+        return;
+      }
     }
     
     setOtpSending(true);
@@ -54,6 +67,7 @@ export default function Login() {
       setShowOTPStep(true);
       setOtpSent(true);
       setOtpMessage(result.message);
+      setResendCountdown(30); // Start 30-second countdown
     } else {
       setError(result.message);
     }
@@ -136,8 +150,20 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black/90 text-white p-6">
-      <div className="w-full max-w-md bg-zinc-900/70 border border-zinc-800 rounded-xl p-6 shadow-xl">
-        <h1 className="text-2xl font-semibold mb-4 text-center">Welcome to CineVerse</h1>
+      <div className="w-full max-w-md bg-zinc-900/70 border border-zinc-800 rounded-xl p-6 shadow-xl relative">
+        {/* Cancel Button */}
+        <button
+          onClick={() => navigate("/")}
+          className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors"
+          aria-label="Close"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        
+        <h1 className="text-2xl font-semibold mb-4 text-center pr-8">Welcome to CineVerse</h1>
         <p className="text-zinc-400 text-sm mb-6 text-center">Sign in to continue</p>
 
         {error && (
@@ -233,10 +259,14 @@ export default function Login() {
             <div className="text-center">
               <button
                 onClick={handleResendOTP}
-                className="text-xs text-indigo-400 hover:underline"
-                disabled={otpSending || otpVerifying || signupSuccess}
+                className="text-xs text-indigo-400 hover:underline disabled:text-zinc-600 disabled:cursor-not-allowed disabled:no-underline"
+                disabled={otpSending || otpVerifying || signupSuccess || resendCountdown > 0}
               >
-                {otpSending ? "Sending..." : "Resend OTP"}
+                {otpSending 
+                  ? "Sending..." 
+                  : resendCountdown > 0 
+                    ? `Resend OTP (${resendCountdown}s)` 
+                    : "Resend OTP"}
               </button>
               <span className="text-zinc-500 mx-2">•</span>
               <button
@@ -245,6 +275,7 @@ export default function Login() {
                   setOtpCode("");
                   setOtpMessage("");
                   setError(null);
+                  setResendCountdown(0);
                 }}
                 className="text-xs text-zinc-400 hover:underline"
                 disabled={otpVerifying || signupSuccess}
