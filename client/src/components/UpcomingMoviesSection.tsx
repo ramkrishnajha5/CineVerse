@@ -42,7 +42,7 @@ export function UpcomingMoviesSection() {
           </h2>
           
           {/* Toggles - below title on mobile, right side on desktop */}
-          <div className="flex items-center gap-2 flex-wrap justify-end">
+          <div className="flex items-center gap-2 flex-wrap justify-start md:justify-end">
             <Button
               variant={region === 'world' ? 'default' : 'outline'}
               size="sm"
