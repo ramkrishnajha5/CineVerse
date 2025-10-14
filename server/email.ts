@@ -26,17 +26,21 @@ if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
 
 export const mailer = nodemailer.createTransport({
   host: SMTP_HOST,
-  port: Number(SMTP_PORT || 587),
-  secure: Number(SMTP_PORT || 587) === 465, // true for 465, false for 587
+  port: Number(SMTP_PORT || 465),
+  secure: true, // Always use SSL for port 465
   auth: {
     user: SMTP_USER,
     pass: SMTP_PASS,
   },
-  // Additional options for better compatibility
+  // Additional options for better compatibility and cloud hosting
   pool: true,
   maxConnections: 1,
   rateDelta: 1000,
   rateLimit: 1,
+  // Longer timeout for cloud environments
+  connectionTimeout: 60000, // 60 seconds
+  greetingTimeout: 30000, // 30 seconds
+  socketTimeout: 60000, // 60 seconds
 });
 
 // Verify SMTP connection on startup
