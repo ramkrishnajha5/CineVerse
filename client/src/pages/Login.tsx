@@ -232,6 +232,7 @@ export default function Login() {
             <div className="text-center p-4 bg-indigo-900/30 border border-indigo-700 rounded">
               <p className="text-sm text-indigo-200 mb-2">📧 OTP sent to:</p>
               <p className="font-semibold text-white">{email}</p>
+              <p className="text-xs text-yellow-300 mt-3 font-semibold">⚠️ Check your SPAM folder if you don't see the email!</p>
             </div>
             
             <div>
