@@ -1,6 +1,7 @@
 import { Express, Request, Response } from 'express';
 import { OTPManager } from '../lib/otp-manager';
 import { sendOtpEmail } from '../email';
+import { adminAuth } from '../admin';
 
 export function registerOTPRoutes(app: Express) {
   /**
@@ -23,6 +24,23 @@ export function registerOTPRoutes(app: Express) {
         return res.status(400).json({ 
           error: 'Invalid email address' 
         });
+      }
+
+      // Check if user already exists in Firebase Auth
+      try {
+        await adminAuth.getUserByEmail(email);
+        // User exists - don't send OTP
+        console.log(`[OTP API] User already exists: ${email}`);
+        return res.status(409).json({ 
+          error: 'Account already exists! Please login with your credentials or reset your password if you forgot it.',
+          userExists: true
+        });
+      } catch (authError: any) {
+        // User not found - this is good for signup, continue
+        if (authError.code !== 'auth/user-not-found') {
+          // Some other error occurred
+          console.error('[OTP API] Error checking user existence:', authError);
+        }
       }
 
       // Check if resend cooldown is active

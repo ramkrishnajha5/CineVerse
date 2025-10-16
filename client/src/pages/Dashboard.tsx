@@ -161,7 +161,7 @@ export default function Dashboard() {
                   <div>
                     <label className="block text-sm mb-1">Name</label>
                     <input
-                      className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700"
+                      className="w-full px-3 py-2 rounded bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white"
                       value={profile?.name || ""}
                       onChange={(e) => setProfile((p) => ({ ...(p||{name:"",profilePicture:"",gender:"",age:"",country:""}), name: e.target.value }))}
                     />
@@ -169,7 +169,7 @@ export default function Dashboard() {
                   <div>
                     <label className="block text-sm mb-1">Gender</label>
                     <select
-                      className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700"
+                      className="w-full px-3 py-2 rounded bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white"
                       value={profile?.gender || ""}
                       onChange={(e) => setProfile((p) => ({ ...(p||{name:"",profilePicture:"",gender:"",age:"",country:""}), gender: e.target.value }))}
                     >
@@ -181,7 +181,7 @@ export default function Dashboard() {
                   <div>
                     <label className="block text-sm mb-1">Age</label>
                     <select
-                      className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700"
+                      className="w-full px-3 py-2 rounded bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white"
                       value={profile?.age || ""}
                       onChange={(e) => setProfile((p) => ({ ...(p||{name:"",profilePicture:"",gender:"",age:"",country:""}), age: e.target.value }))}
                     >
@@ -194,7 +194,7 @@ export default function Dashboard() {
                   <div>
                     <label className="block text-sm mb-1">Country</label>
                     <select
-                      className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700"
+                      className="w-full px-3 py-2 rounded bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white"
                       value={profile?.country || ""}
                       onChange={(e) => setProfile((p) => ({ ...(p||{name:"",profilePicture:"",gender:"",age:"",country:""}), country: e.target.value }))}
                     >
@@ -213,20 +213,19 @@ export default function Dashboard() {
                           const file = e.target.files?.[0];
                           if (!file) return;
                           try {
-                            setProfileMsg('Uploading to Cloudinary...');
+                            setProfileMsg('Uploading profile picture...');
                             const res = await uploadImageToCloudinary(file, { folder: `users/${uid}` });
                             setProfile((p) => ({ ...(p||{name:"",profilePicture:"",gender:"",age:"",country:""}), profilePicture: res.secure_url }));
-                            setProfileMsg('Upload complete. Click Save Profile to apply.');
+                            setProfileMsg('✅ Profile picture uploaded successfully!');
                           } catch (err: any) {
-                            setProfileMsg(err?.message || 'Cloudinary upload failed');
+                            setProfileMsg(err?.message || 'Upload failed');
                           }
                         }}
                         className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-3 file:rounded file:border-0 file:bg-zinc-700 file:text-white hover:file:bg-zinc-600"
                       />
                     {profile?.profilePicture && (
-                      <div className="mt-2 flex items-center gap-3">
+                      <div className="mt-2">
                         <img src={profile.profilePicture} alt="Profile" className="w-14 h-14 rounded-full object-cover border" />
-                        <span className="text-xs text-muted-foreground break-all">{profile.profilePicture}</span>
                       </div>
                     )}
                   </div>
