@@ -133,12 +133,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black/90 text-white p-6">
-      <div className="w-full max-w-md bg-zinc-900/70 border border-zinc-800 rounded-xl p-6 shadow-xl relative">
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground p-6">
+      <div className="w-full max-w-md bg-card border border-border rounded-xl p-6 shadow-xl relative">
         {/* Cancel Button */}
         <button
           onClick={() => navigate("/")}
-          className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Close"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -170,7 +170,7 @@ export default function Login() {
               <label className="block text-sm mb-1">Email</label>
               <input
                 type="email"
-                className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 rounded bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -181,7 +181,7 @@ export default function Login() {
               <label className="block text-sm mb-1">Password</label>
               <input
                 type="password"
-                className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 rounded bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -194,7 +194,7 @@ export default function Login() {
                 <label className="block text-sm mb-1">Confirm Password</label>
                 <input
                   type="password"
-                  className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700 outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   required
