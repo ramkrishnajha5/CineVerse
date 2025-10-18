@@ -8,7 +8,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className={`relative w-16 h-8 rounded-full border-2 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
+      className={`relative w-12 h-6 md:w-16 md:h-8 rounded-full border-2 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${
         theme === 'dark' 
           ? 'bg-slate-700 border-slate-600' 
           : 'bg-yellow-100 border-yellow-300'
@@ -18,23 +18,23 @@ export function ThemeToggle() {
     >
       {/* Toggle circle */}
       <div
-        className={`absolute top-0.5 w-6 h-6 rounded-full transition-all duration-300 ease-in-out transform ${
+        className={`absolute top-0.5 w-4 h-4 md:w-6 md:h-6 rounded-full transition-all duration-300 ease-in-out transform ${
           theme === 'dark' 
-            ? 'translate-x-8 bg-slate-300' 
+            ? 'translate-x-6 md:translate-x-8 bg-slate-300' 
             : 'translate-x-0.5 bg-yellow-400'
         }`}
       />
       
       {/* Sun icon */}
       <Sun 
-        className={`absolute left-1 top-1 w-4 h-4 text-yellow-600 transition-all duration-300 ${
+        className={`absolute left-0.5 md:left-1 top-0.5 md:top-1 w-3 h-3 md:w-4 md:h-4 text-yellow-600 transition-all duration-300 ${
           theme === 'dark' ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
         }`} 
       />
       
       {/* Moon icon */}
       <Moon 
-        className={`absolute right-1 top-1 w-4 h-4 text-slate-400 transition-all duration-300 ${
+        className={`absolute right-0.5 md:right-1 top-0.5 md:top-1 w-3 h-3 md:w-4 md:h-4 text-slate-400 transition-all duration-300 ${
           theme === 'light' ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
         }`} 
       />

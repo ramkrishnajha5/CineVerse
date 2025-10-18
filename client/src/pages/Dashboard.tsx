@@ -6,13 +6,32 @@ import { useLocation } from "wouter";
 import { getUserProfile, updateUserProfile, getWatchlist, getFavourites, removeFromWatchlist, removeFromFavourites, type MediaItem, type UserProfile } from "@/lib/firestore";
 import { countries } from "@/lib/countries";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
-  const { user, signOutUser } = useAuth();
+  const { user, signOutUser, deleteAccount } = useAuth();
   const [, navigate] = useLocation();
+  const { toast } = useToast();
   const [active, setActive] = useState<"profile" | "watchlist" | "favourites">("profile");
   const uid = user?.uid || "";
   const userEmail = user?.email || "";
+  
+  // Delete account state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteEmailInput, setDeleteEmailInput] = useState("");
+  const [deletePasswordInput, setDeletePasswordInput] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
+  
+  // Check if user is Google user
+  useEffect(() => {
+    if (user) {
+      const googleUser = user.providerData.some(
+        provider => provider.providerId === 'google.com'
+      );
+      setIsGoogleUser(googleUser);
+    }
+  }, [user]);
 
   // Profile state
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -89,12 +108,18 @@ export default function Dashboard() {
               </button>
             ))}
           </nav>
-          <div className="mt-auto pt-4">
+          <div className="mt-auto pt-4 space-y-2">
             <button
               onClick={async () => { await signOutUser(); navigate('/'); }}
               className="w-full px-3 py-2 rounded bg-red-600 text-white hover:bg-red-500 transition-transform hover:scale-[1.01] shadow-sm"
             >
               Logout
+            </button>
+            <button
+              onClick={() => setShowDeleteDialog(true)}
+              className="w-full px-3 py-2 rounded bg-gray-700 text-white hover:bg-gray-600 transition-transform hover:scale-[1.01] shadow-sm text-sm"
+            >
+              Delete Account
             </button>
           </div>
         </aside>
@@ -318,6 +343,99 @@ export default function Dashboard() {
         </section>
       </main>
       <Footer />
+      
+      {/* Delete Account Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold mb-4 text-red-600">Delete Account</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              This action cannot be undone. All your data including profile, watchlist, and favorites will be permanently deleted.
+            </p>
+            <p className="text-sm font-medium mb-2">
+              Please enter your email <span className="text-primary">{userEmail}</span> to confirm:
+            </p>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={deleteEmailInput}
+              onChange={(e) => setDeleteEmailInput(e.target.value)}
+              className="w-full px-3 py-2 rounded bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white mb-3"
+              disabled={isDeleting}
+            />
+            {!isGoogleUser && (
+              <>
+                <p className="text-sm font-medium mb-2">
+                  Enter your password to confirm:
+                </p>
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  value={deletePasswordInput}
+                  onChange={(e) => setDeletePasswordInput(e.target.value)}
+                  className="w-full px-3 py-2 rounded bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white mb-4"
+                  disabled={isDeleting}
+                />
+              </>
+            )}
+            {isGoogleUser && (
+              <p className="text-sm text-muted-foreground mb-4">
+                You'll be prompted to re-authenticate with Google before deletion.
+              </p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteDialog(false);
+                  setDeleteEmailInput("");
+                  setDeletePasswordInput("");
+                }}
+                className="flex-1 px-4 py-2 rounded border hover:bg-accent"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (deleteEmailInput.trim() !== userEmail) {
+                    toast({ title: "Email doesn't match", variant: "destructive" });
+                    return;
+                  }
+                  if (!isGoogleUser && !deletePasswordInput.trim()) {
+                    toast({ title: "Password is required", variant: "destructive" });
+                    return;
+                  }
+                  try {
+                    setIsDeleting(true);
+                    await deleteAccount(deletePasswordInput || undefined);
+                    toast({ title: "Account deleted successfully" });
+                    navigate('/');
+                  } catch (error: any) {
+                    let errorMessage = "Please try again";
+                    if (error.message === 'PASSWORD_REQUIRED') {
+                      errorMessage = "Password is required for this operation";
+                    } else if (error.code === 'auth/wrong-password') {
+                      errorMessage = "Incorrect password";
+                    } else if (error.message) {
+                      errorMessage = error.message;
+                    }
+                    toast({ 
+                      title: "Failed to delete account", 
+                      description: errorMessage,
+                      variant: "destructive" 
+                    });
+                    setIsDeleting(false);
+                  }
+                }}
+                className="flex-1 px-4 py-2 rounded bg-red-600 text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isDeleting || deleteEmailInput.trim() !== userEmail || (!isGoogleUser && !deletePasswordInput.trim())}
+              >
+                {isDeleting ? "Deleting..." : "Delete Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
