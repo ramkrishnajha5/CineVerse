@@ -7,6 +7,7 @@ import { getUserProfile, updateUserProfile, getWatchlist, getFavourites, removeF
 import { countries } from "@/lib/countries";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 import { useToast } from "@/hooks/use-toast";
+import { getAuthErrorMessage } from "@/lib/authErrors";
 
 export default function Dashboard() {
   const { user, signOutUser, deleteAccount } = useAuth();
@@ -411,14 +412,7 @@ export default function Dashboard() {
                     toast({ title: "Account deleted successfully" });
                     navigate('/');
                   } catch (error: any) {
-                    let errorMessage = "Please try again";
-                    if (error.message === 'PASSWORD_REQUIRED') {
-                      errorMessage = "Password is required for this operation";
-                    } else if (error.code === 'auth/wrong-password') {
-                      errorMessage = "Incorrect password";
-                    } else if (error.message) {
-                      errorMessage = error.message;
-                    }
+                    const errorMessage = getAuthErrorMessage(error);
                     toast({ 
                       title: "Failed to delete account", 
                       description: errorMessage,
