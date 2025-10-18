@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { getAuthErrorMessage } from "@/lib/authErrors";
 
 export default function Login() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword, loading, user, sendOTP, verifyOTP, createAccountAfterOTP } = useAuth();
@@ -93,12 +94,7 @@ export default function Login() {
         setOtpMessage("Account created successfully!");
         setTimeout(() => navigate("/"), 2000);
       } catch (err: any) {
-        const code = err?.code || "";
-        let msg = err?.message || "Failed to create account";
-        if (code === "auth/email-already-in-use") {
-          msg = "This email is already registered. Please sign in.";
-        }
-        setError(msg);
+        setError(getAuthErrorMessage(err));
       }
     } else {
       setError(result.message);
@@ -118,19 +114,7 @@ export default function Login() {
         await handleSendOTP();
       }
     } catch (err: any) {
-      // Map common Firebase errors to friendly messages
-      const code = err?.code || "";
-      let msg = err?.message || "Something went wrong";
-      if (code === "auth/email-already-in-use") {
-        msg = "This email is already registered. Please sign in or use Forgot Password.";
-      } else if (code === "auth/invalid-email") {
-        msg = "Please enter a valid email address.";
-      } else if (code === "auth/weak-password") {
-        msg = "Your password is too weak. Use at least 8 chars with uppercase and a symbol.";
-      } else if (code === "auth/user-not-found" || code === "auth/wrong-password") {
-        msg = "Incorrect email or password.";
-      }
-      setError(msg);
+      setError(getAuthErrorMessage(err));
     }
   };
 
@@ -144,7 +128,7 @@ export default function Login() {
       await signInWithGoogle();
       navigate("/");
     } catch (err: any) {
-      setError(err?.message || "Google sign-in failed");
+      setError(getAuthErrorMessage(err));
     }
   };
 
@@ -308,7 +292,7 @@ export default function Login() {
                       await resetPassword(email);
                       alert("Password reset email sent");
                     } catch (e: any) {
-                      setError(e?.message || "Failed to send reset email");
+                      setError(getAuthErrorMessage(e));
                     }
                   }}
                   className="text-xs text-zinc-400 hover:text-indigo-400"
