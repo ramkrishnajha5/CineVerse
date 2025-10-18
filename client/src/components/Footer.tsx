@@ -178,7 +178,15 @@ export function Footer() {
                 <div className="flex items-center space-x-1" data-testid="made-with-love">
                   <span>Made with</span>
                   <Heart className="w-4 h-4 text-red-500 fill-current" />
-                  <span>by Ram Krishna</span>
+                  <span>by</span>
+                  <a 
+                    href="https://www.instagram.com/ramkrishnajha5" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-medium transition-colors"
+                  >
+                    Ram Krishna
+                  </a>
                 </div>
               </div>
             </div>

@@ -91,3 +91,20 @@ export async function uploadUserProfilePicture(uid: string, file: File) {
   const url = await getDownloadURL(res.ref);
   return url;
 }
+
+// Delete all user data from Firestore (profile, watchlist, favorites)
+export async function deleteUserAccount(uid: string) {
+  // Delete all watchlist items
+  const watchlistRef = collection(doc(db, "users", uid), "watchlist");
+  const watchlistSnap = await getDocs(watchlistRef);
+  await Promise.all(watchlistSnap.docs.map(d => deleteDoc(d.ref)));
+  
+  // Delete all favorites items
+  const favoritesRef = collection(doc(db, "users", uid), "favorites");
+  const favoritesSnap = await getDocs(favoritesRef);
+  await Promise.all(favoritesSnap.docs.map(d => deleteDoc(d.ref)));
+  
+  // Delete user profile document
+  const userRef = doc(db, "users", uid);
+  await deleteDoc(userRef);
+}

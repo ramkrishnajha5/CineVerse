@@ -396,6 +396,22 @@ export default function MovieDetail() {
               </div>
             </div>
             
+            {/* Trailer Section */}
+            {trailer && (
+              <div className="mt-12">
+                <h3 className="text-2xl font-semibold mb-6">Trailer</h3>
+                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                  <iframe
+                    className="absolute top-0 left-0 w-full h-full rounded-lg shadow-xl"
+                    src={`https://www.youtube.com/embed/${trailer.key}`}
+                    title={trailer.name}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Cast & Crew */}
             {!creditsLoading && (director || topCast.length > 0) && (
               <div className="mt-12">

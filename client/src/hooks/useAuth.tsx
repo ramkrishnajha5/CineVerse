@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, signInWithPopup, sendPasswordResetEmail, sendEmailVerification } from "firebase/auth";
+import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, signInWithPopup, sendPasswordResetEmail, sendEmailVerification, deleteUser, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
-import { ensureUserDoc } from "@/lib/firestore";
+import { ensureUserDoc, deleteUserAccount } from "@/lib/firestore";
 
 interface AuthContextValue {
   user: User | null;
@@ -13,6 +13,8 @@ interface AuthContextValue {
   resetPassword: (email: string) => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  deleteAccount: (password?: string) => Promise<void>;
+  reauthenticate: (password: string) => Promise<void>;
   // OTP methods
   sendOTP: (email: string) => Promise<{ success: boolean; message: string }>;
   verifyOTP: (email: string, code: string) => Promise<{ success: boolean; message: string }>;
@@ -137,6 +139,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         age: "",
         country: "",
       });
+    },
+    async reauthenticate(password: string) {
+      if (!auth.currentUser) throw new Error("Not signed in");
+      const email = auth.currentUser.email;
+      if (!email) throw new Error("No email found");
+      
+      // Check if user signed in with Google
+      const isGoogleUser = auth.currentUser.providerData.some(
+        provider => provider.providerId === 'google.com'
+      );
+      
+      if (isGoogleUser) {
+        // Re-authenticate with Google popup
+        await reauthenticateWithPopup(auth.currentUser, googleProvider);
+      } else {
+        // Re-authenticate with email/password
+        const credential = EmailAuthProvider.credential(email, password);
+        await reauthenticateWithCredential(auth.currentUser, credential);
+      }
+    },
+    async deleteAccount(password?: string) {
+      if (!auth.currentUser) throw new Error("Not signed in");
+      const uid = auth.currentUser.uid;
+      
+      // Check if user signed in with Google
+      const isGoogleUser = auth.currentUser.providerData.some(
+        provider => provider.providerId === 'google.com'
+      );
+      
+      try {
+        // Try to delete directly first
+        await deleteUserAccount(uid);
+        await deleteUser(auth.currentUser);
+      } catch (error: any) {
+        // If requires recent login, re-authenticate and retry
+        if (error.code === 'auth/requires-recent-login') {
+          if (isGoogleUser) {
+            // Re-authenticate with Google
+            await reauthenticateWithPopup(auth.currentUser, googleProvider);
+          } else {
+            // Re-authenticate with password
+            if (!password) {
+              throw new Error('PASSWORD_REQUIRED');
+            }
+            const email = auth.currentUser.email;
+            if (!email) throw new Error("No email found");
+            const credential = EmailAuthProvider.credential(email, password);
+            await reauthenticateWithCredential(auth.currentUser, credential);
+          }
+          // Retry deletion after re-authentication
+          await deleteUserAccount(uid);
+          await deleteUser(auth.currentUser);
+        } else {
+          throw error;
+        }
+      }
     },
   }), [user, loading]);
 
