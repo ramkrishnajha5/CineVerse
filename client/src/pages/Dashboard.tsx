@@ -59,16 +59,18 @@ export default function Dashboard() {
         if (p) {
           setProfile(p);
         } else {
-          // Seed defaults if missing
+          // Create default profile in Firestore if it doesn't exist
           const defaultName = (userEmail.split("@")[0] || "User");
-          setProfile({ name: defaultName, profilePicture: "", gender: "", age: "", country: "" });
+          const defaultProfile = { name: defaultName, profilePicture: "", gender: "", age: "", country: "" };
+          await updateUserProfile(uid, defaultProfile);
+          setProfile(defaultProfile);
         }
       } finally {
         setProfileLoading(false);
       }
     };
     load();
-  }, [canLoad, uid]);
+  }, [canLoad, uid, userEmail]);
 
   // Load lists when switching tabs to lists or when user changes
   useEffect(() => {
@@ -129,14 +131,29 @@ export default function Dashboard() {
             <div className="bg-card border rounded-lg p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold">Profile</h3>
-                {!profileLoading && (
-                  <button
-                    className="px-3 py-1 rounded border hover:bg-accent text-sm"
-                    onClick={() => setEditing((v) => !v)}
-                  >
-                    {editing ? 'Cancel' : 'Edit'}
-                  </button>
-                )}
+                <div className="flex gap-2">
+                  {!profileLoading && (
+                    <>
+                      <button
+                        className="px-3 py-1 rounded border hover:bg-accent text-sm"
+                        onClick={async () => {
+                          setProfileLoading(true);
+                          const p = await getUserProfile(uid);
+                          if (p) setProfile(p);
+                          setProfileLoading(false);
+                        }}
+                      >
+                        Refresh
+                      </button>
+                      <button
+                        className="px-3 py-1 rounded border hover:bg-accent text-sm"
+                        onClick={() => setEditing((v) => !v)}
+                      >
+                        {editing ? 'Cancel' : 'Edit'}
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
               {profileLoading ? (
                 <p className="text-sm text-muted-foreground">Loading profile...</p>
@@ -161,7 +178,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <div className="text-sm text-muted-foreground">Age</div>
-                    <div className="text-base">{profile?.age || '-'}</div>
+                    <div className="text-base">{profile?.age ? `${profile.age} Years` : '-'}</div>
                   </div>
                   <div>
                     <div className="text-sm text-muted-foreground">Country</div>
@@ -177,6 +194,9 @@ export default function Dashboard() {
                     try {
                       setProfileMsg(null);
                       await updateUserProfile(uid, profile || {});
+                      // Fetch fresh profile data from Firestore
+                      const updatedProfile = await getUserProfile(uid);
+                      if (updatedProfile) setProfile(updatedProfile);
                       setProfileMsg("Profile updated");
                       setEditing(false);
                     } catch (err: any) {
@@ -241,8 +261,12 @@ export default function Dashboard() {
                           try {
                             setProfileMsg('Uploading profile picture...');
                             const res = await uploadImageToCloudinary(file, { folder: `users/${uid}` });
-                            setProfile((p) => ({ ...(p||{name:"",profilePicture:"",gender:"",age:"",country:""}), profilePicture: res.secure_url }));
-                            setProfileMsg('✅ Profile picture uploaded successfully!');
+                            // Save to Firestore immediately
+                            await updateUserProfile(uid, { ...profile, profilePicture: res.secure_url });
+                            // Refresh from Firestore to ensure sync
+                            const updatedProfile = await getUserProfile(uid);
+                            if (updatedProfile) setProfile(updatedProfile);
+                            setProfileMsg('✅ Profile picture uploaded and saved!');
                           } catch (err: any) {
                             setProfileMsg(err?.message || 'Upload failed');
                           }
