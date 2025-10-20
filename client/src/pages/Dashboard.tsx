@@ -279,16 +279,25 @@ export default function Dashboard() {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {watchlist.map(item => (
-                    <div key={`${item.mediaType}-${item.tmdbId}`} className="rounded border bg-card overflow-hidden">
-                      {item.posterPath ? (
-                        <img src={`https://image.tmdb.org/t/p/w300${item.posterPath}`} alt={item.title} className="w-full aspect-[2/3] object-cover" />
-                      ) : (
-                        <div className="w-full aspect-[2/3] bg-zinc-800 flex items-center justify-center text-sm text-muted-foreground">No poster</div>
-                      )}
+                    <div key={`${item.mediaType}-${item.tmdbId}`} className="rounded border bg-card overflow-hidden group">
+                      <div 
+                        className="cursor-pointer"
+                        onClick={() => navigate(item.mediaType === 'tv' ? `/tv/${item.tmdbId}` : `/movie/${item.tmdbId}`)}
+                      >
+                        {item.posterPath ? (
+                          <img src={`https://image.tmdb.org/t/p/w300${item.posterPath}`} alt={item.title} className="w-full aspect-[2/3] object-cover group-hover:opacity-80 transition-opacity" />
+                        ) : (
+                          <div className="w-full aspect-[2/3] bg-zinc-800 flex items-center justify-center text-sm text-muted-foreground group-hover:bg-zinc-700 transition-colors">No poster</div>
+                        )}
+                      </div>
                       <div className="p-2 flex items-center justify-between gap-2">
-                        <div className="text-sm line-clamp-2" title={item.title}>{item.title}</div>
+                        <div 
+                          className="text-sm line-clamp-2 cursor-pointer hover:text-primary transition-colors flex-1" 
+                          title={item.title}
+                          onClick={() => navigate(item.mediaType === 'tv' ? `/tv/${item.tmdbId}` : `/movie/${item.tmdbId}`)}
+                        >{item.title}</div>
                         <button
-                          className="text-xs text-red-400 hover:text-red-300"
+                          className="text-xs text-red-400 hover:text-red-300 shrink-0"
                           onClick={async () => {
                             if (!uid) return;
                             await removeFromWatchlist(uid, item.tmdbId);
@@ -318,16 +327,25 @@ export default function Dashboard() {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {favourites.map(item => (
-                    <div key={`${item.mediaType}-${item.tmdbId}`} className="rounded border bg-card overflow-hidden">
-                      {item.posterPath ? (
-                        <img src={`https://image.tmdb.org/t/p/w300${item.posterPath}`} alt={item.title} className="w-full aspect-[2/3] object-cover" />
-                      ) : (
-                        <div className="w-full aspect-[2/3] bg-zinc-800 flex items-center justify-center text-sm text-muted-foreground">No poster</div>
-                      )}
+                    <div key={`${item.mediaType}-${item.tmdbId}`} className="rounded border bg-card overflow-hidden group">
+                      <div 
+                        className="cursor-pointer"
+                        onClick={() => navigate(item.mediaType === 'tv' ? `/tv/${item.tmdbId}` : `/movie/${item.tmdbId}`)}
+                      >
+                        {item.posterPath ? (
+                          <img src={`https://image.tmdb.org/t/p/w300${item.posterPath}`} alt={item.title} className="w-full aspect-[2/3] object-cover group-hover:opacity-80 transition-opacity" />
+                        ) : (
+                          <div className="w-full aspect-[2/3] bg-zinc-800 flex items-center justify-center text-sm text-muted-foreground group-hover:bg-zinc-700 transition-colors">No poster</div>
+                        )}
+                      </div>
                       <div className="p-2 flex items-center justify-between gap-2">
-                        <div className="text-sm line-clamp-2" title={item.title}>{item.title}</div>
+                        <div 
+                          className="text-sm line-clamp-2 cursor-pointer hover:text-primary transition-colors flex-1" 
+                          title={item.title}
+                          onClick={() => navigate(item.mediaType === 'tv' ? `/tv/${item.tmdbId}` : `/movie/${item.tmdbId}`)}
+                        >{item.title}</div>
                         <button
-                          className="text-xs text-red-400 hover:text-red-300"
+                          className="text-xs text-red-400 hover:text-red-300 shrink-0"
                           onClick={async () => {
                             if (!uid) return;
                             await removeFromFavourites(uid, item.tmdbId);
