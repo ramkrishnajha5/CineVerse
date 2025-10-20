@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, signInWithPopup, sendPasswordResetEmail, sendEmailVerification, deleteUser, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
-import { ensureUserDoc, deleteUserAccount } from "@/lib/firestore";
+import { ensureUserDoc, deleteUserAccount, getUserProfile } from "@/lib/firestore";
 
 interface AuthContextValue {
   user: User | null;
@@ -41,24 +41,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async signInWithGoogle() {
       const cred = await signInWithPopup(auth, googleProvider);
       const email = cred.user.email || "";
-      await ensureUserDoc(cred.user.uid, {
-        name: email || cred.user.displayName || "User",
-        profilePicture: cred.user.photoURL || "",
-        gender: "",
-        age: "",
-        country: "",
-      });
+      // Only create profile if it doesn't exist (first-time login)
+      const existingProfile = await getUserProfile(cred.user.uid);
+      if (!existingProfile) {
+        await ensureUserDoc(cred.user.uid, {
+          name: email || cred.user.displayName || "User",
+          profilePicture: cred.user.photoURL || "",
+          gender: "",
+          age: "",
+          country: "",
+        });
+      }
     },
     async signInWithEmail(email: string, password: string) {
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      // Ensure profile doc exists for older accounts
-      await ensureUserDoc(cred.user.uid, {
-        name: email,
-        profilePicture: cred.user.photoURL || "",
-        gender: "",
-        age: "",
-        country: "",
-      });
+      // Only create profile if it doesn't exist (first-time login)
+      const existingProfile = await getUserProfile(cred.user.uid);
+      if (!existingProfile) {
+        await ensureUserDoc(cred.user.uid, {
+          name: email,
+          profilePicture: cred.user.photoURL || "",
+          gender: "",
+          age: "",
+          country: "",
+        });
+      }
     },
     async signUpWithEmail(email: string, password: string) {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
