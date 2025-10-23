@@ -213,24 +213,24 @@ export default function Login() {
           </form>
         ) : (
           <div className="space-y-4">
-            <div className="text-center p-4 bg-indigo-900/30 border border-indigo-700 rounded">
-              <p className="text-sm text-indigo-200 mb-2">📧 OTP sent to:</p>
-              <p className="font-semibold text-white">{email}</p>
-              <p className="text-xs text-yellow-300 mt-3 font-semibold">⚠️ Check your SPAM folder if you don't see the email!</p>
+            <div className="text-center p-4 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 rounded">
+              <p className="text-sm text-indigo-700 dark:text-indigo-200 mb-2">📧 OTP sent to:</p>
+              <p className="font-semibold text-indigo-900 dark:text-white">{email}</p>
+              <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-3 font-semibold">⚠️ Check your SPAM folder if you don't see the email!</p>
             </div>
             
             <div>
               <label className="block text-sm mb-1">Enter 6-digit OTP</label>
               <input
                 type="text"
-                className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700 outline-none focus:ring-2 focus:ring-indigo-500 text-center text-2xl tracking-widest font-mono"
+                className="w-full px-3 py-2 rounded bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 text-center text-2xl tracking-widest font-mono"
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000"
                 maxLength={6}
                 disabled={otpVerifying || signupSuccess}
               />
-              <p className="text-xs text-zinc-400 mt-2">Check your email inbox and spam folder</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-2">Check your email inbox and spam folder</p>
             </div>
             
             <button
