@@ -5,6 +5,7 @@ import { ArrowLeft, Calendar, Clock, Star, Play, X, ExternalLink, BookmarkPlus, 
 import { Header } from '@/components/Header';
 import { MovieCard } from '@/components/MovieCard';
 import { Footer } from '@/components/Footer';
+import { ReviewSection } from '@/components/ReviewSection';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +21,7 @@ export default function MovieDetail() {
   const [isTrailerPlaying, setIsTrailerPlaying] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const movieId = parseInt(id || '0');
   const isTV = window.location.pathname.includes('/tv/');
 
@@ -82,34 +83,34 @@ export default function MovieDetail() {
       : (['/movie', movieId, 'similar', undefined, genresKey] as const),
     queryFn: async () => {
       if (!details) return null;
-      
+
       const tvOrigin = (details as TVDetailType | any).origin_country as string[] | undefined;
-      const isRegional = tvOrigin?.includes('IN') || 
-                        (details as any).original_language === 'hi' || 
-                        (details as any).original_language === 'te' || 
-                        (details as any).original_language === 'ta';
-      
+      const isRegional = tvOrigin?.includes('IN') ||
+        (details as any).original_language === 'hi' ||
+        (details as any).original_language === 'te' ||
+        (details as any).original_language === 'ta';
+
       const genreIds = details.genres?.map(g => g.id).join(',') || '';
-      
+
       try {
         if (isRegional && genreIds) {
           // For regional content, get regional similar with same genres
-          const regionalSimilar = isTV 
+          const regionalSimilar = isTV
             ? await tmdbApi.getRegionalSimilarTVShows(movieId, 'IN', genreIds)
             : await tmdbApi.getRegionalSimilarMovies(movieId, 'IN', genreIds);
-          
+
           if (regionalSimilar.results.length > 0) {
             return regionalSimilar;
           }
         }
-        
+
         if (genreIds) {
           // Fallback to genre-based similar content
-          return isTV 
+          return isTV
             ? await tmdbApi.getGenreSimilarTVShows(movieId, genreIds)
             : await tmdbApi.getGenreSimilarMovies(movieId, genreIds);
         }
-        
+
         // Final fallback to original similar endpoint
         return isTV ? await tmdbApi.getSimilarTVShows(movieId) : await tmdbApi.getSimilarMovies(movieId);
       } catch (error) {
@@ -172,7 +173,7 @@ export default function MovieDetail() {
   const title = isTV ? (details as any).name : (details as any).title;
   const releaseDate = isTV ? (details as any).first_air_date : (details as any).release_date;
   const runtime = isTV ? (details as any).episode_run_time?.[0] : (details as any).runtime;
-  
+
   const trailer = videos?.results.find(
     video => video.type === 'Trailer' && video.site === 'YouTube'
   );
@@ -270,7 +271,7 @@ export default function MovieDetail() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Home
             </Button>
-            
+
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Poster */}
               <div className="lg:col-span-1">
@@ -287,17 +288,17 @@ export default function MovieDetail() {
                   </div>
                 )}
               </div>
-              
+
               {/* Movie Information */}
               <div className="lg:col-span-2 space-y-6">
                 <div>
-                  <h1 
+                  <h1
                     className="text-4xl font-display font-bold mb-4 gradient-text"
                     data-testid="movie-title"
                   >
                     {title}
                   </h1>
-                  
+
                   {/* Meta Information */}
                   <div className="flex flex-wrap items-center gap-4 mb-6 text-sm">
                     {details.vote_average > 0 && (
@@ -308,14 +309,14 @@ export default function MovieDetail() {
                         </span>
                       </div>
                     )}
-                    
+
                     {releaseDate && (
                       <div className="flex items-center text-muted-foreground">
                         <Calendar className="w-4 h-4 mr-1" />
                         <span>{new Date(releaseDate).getFullYear()}</span>
                       </div>
                     )}
-                    
+
                     {runtime && (
                       <div className="flex items-center text-muted-foreground">
                         <Clock className="w-4 h-4 mr-1" />
@@ -323,7 +324,7 @@ export default function MovieDetail() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Genres */}
                   {details.genres && details.genres.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-6">
@@ -340,11 +341,10 @@ export default function MovieDetail() {
                     <button
                       onClick={handleSaveWatchlist}
                       title={!user ? 'Login to save to Watchlist' : undefined}
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] ${
-                        inWatchlist 
-                          ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-600 text-white' 
-                          : 'bg-gradient-to-r from-blue-500/70 via-blue-600/70 to-cyan-600/70 text-white/90 hover:from-blue-500 hover:via-blue-600 hover:to-cyan-600'
-                      }`}
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] ${inWatchlist
+                        ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-600 text-white'
+                        : 'bg-gradient-to-r from-blue-500/70 via-blue-600/70 to-cyan-600/70 text-white/90 hover:from-blue-500 hover:via-blue-600 hover:to-cyan-600'
+                        }`}
                     >
                       <BookmarkPlus className={`w-4 h-4 transition-all ${inWatchlist ? 'fill-current' : ''}`} />
                       <span className="font-medium">{inWatchlist ? 'Saved to Watchlist' : 'Save to Watchlist'}</span>
@@ -352,11 +352,10 @@ export default function MovieDetail() {
                     <button
                       onClick={handleSaveFavourite}
                       title={!user ? 'Login to add to Favourites' : undefined}
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] ${
-                        inFavourites 
-                          ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-red-500 text-white' 
-                          : 'bg-gradient-to-r from-pink-500/70 via-rose-500/70 to-red-500/70 text-white/90 hover:from-pink-500 hover:via-rose-500 hover:to-red-500'
-                      }`}
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-md transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] ${inFavourites
+                        ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-red-500 text-white'
+                        : 'bg-gradient-to-r from-pink-500/70 via-rose-500/70 to-red-500/70 text-white/90 hover:from-pink-500 hover:via-rose-500 hover:to-red-500'
+                        }`}
                     >
                       <Heart className={`w-4 h-4 transition-all ${inFavourites ? 'fill-current' : ''}`} />
                       <span className="font-medium">{inFavourites ? 'Added to Favourites' : 'Add to Favourites'}</span>
@@ -372,7 +371,7 @@ export default function MovieDetail() {
                     </p>
                   </div>
                 )}
-                
+
                 {/* Box Office (Movies only) */}
                 {!isTV && (details as any).budget && (details as any).revenue && (
                   <div>
@@ -395,7 +394,7 @@ export default function MovieDetail() {
                 )}
               </div>
             </div>
-            
+
             {/* Trailer Section */}
             {trailer && (
               <div className="mt-12">
@@ -418,8 +417,8 @@ export default function MovieDetail() {
                 <h3 className="text-2xl font-semibold mb-6">Cast & Crew</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                   {director && (
-                    <div 
-                      className="text-center cursor-pointer group transition-transform hover:scale-105" 
+                    <div
+                      className="text-center cursor-pointer group transition-transform hover:scale-105"
                       data-testid="director-info"
                       onClick={() => navigate(`/person/${director.id}`)}
                     >
@@ -438,11 +437,11 @@ export default function MovieDetail() {
                       <div className="text-xs text-muted-foreground">Director</div>
                     </div>
                   )}
-                  
+
                   {topCast.map((actor) => (
-                    <div 
-                      key={actor.id} 
-                      className="text-center cursor-pointer group transition-transform hover:scale-105" 
+                    <div
+                      key={actor.id}
+                      className="text-center cursor-pointer group transition-transform hover:scale-105"
                       data-testid={`cast-${actor.id}`}
                       onClick={() => navigate(`/person/${actor.id}`)}
                     >
@@ -466,7 +465,14 @@ export default function MovieDetail() {
                 </div>
               </div>
             )}
-            
+
+            {/* Reviews & Comments Section */}
+            <ReviewSection
+              tmdbId={movieId}
+              mediaType={isTV ? 'tv' : 'movie'}
+              title={title as string}
+            />
+
             {/* More Like This */}
             {similar && similar.results.length > 0 && (
               <div className="mt-12">
