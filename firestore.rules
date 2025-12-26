@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User profiles - users can read/write their own data
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      // Watchlist subcollection
+      match /watchlist/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Favorites subcollection
+      match /favorites/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Reviews collection - PUBLIC READ, authenticated users can write their own reviews
+    match /reviews/{reviewId} {
+      // Anyone can read reviews (no authentication required)
+      allow read: if true;
+      
+      // Authenticated users can create reviews
+      allow create: if request.auth != null 
+                    && request.resource.data.userId == request.auth.uid;
+      
+      // Users can only update/delete their own reviews
+      allow update, delete: if request.auth != null 
+                            && resource.data.userId == request.auth.uid;
+    }
+  }
+}
