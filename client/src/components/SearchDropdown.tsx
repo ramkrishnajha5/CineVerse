@@ -1,14 +1,114 @@
 import { SearchResult } from '@/types/tmdb';
 import { tmdbApi } from '@/lib/tmdb';
-import { Calendar, Film, Tv, User } from 'lucide-react';
+import { Calendar, Film, Tv, User, Clock, X } from 'lucide-react';
+
+// LocalStorage key for recent searches
+const RECENT_SEARCHES_KEY = 'cineverse_recent_searches';
+const MAX_RECENT_SEARCHES = 3;
+
+// Helper functions for localStorage
+export function getRecentSearches(): string[] {
+  try {
+    const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addRecentSearch(term: string): void {
+  try {
+    const searches = getRecentSearches();
+    // Remove if already exists (to move to top)
+    const filtered = searches.filter(s => s.toLowerCase() !== term.toLowerCase());
+    // Add to beginning
+    filtered.unshift(term);
+    // Keep only last 3
+    const trimmed = filtered.slice(0, MAX_RECENT_SEARCHES);
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(trimmed));
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+export function removeRecentSearch(term: string): void {
+  try {
+    const searches = getRecentSearches();
+    const filtered = searches.filter(s => s.toLowerCase() !== term.toLowerCase());
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(filtered));
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
+export function clearRecentSearches(): void {
+  try {
+    localStorage.removeItem(RECENT_SEARCHES_KEY);
+  } catch {
+    // Ignore localStorage errors
+  }
+}
 
 interface SearchDropdownProps {
   results: SearchResult[];
   isVisible: boolean;
   onItemClick: (result: SearchResult) => void;
+  showRecentSearches?: boolean;
+  onRecentSearchClick?: (term: string) => void;
+  onRemoveRecentSearch?: (term: string) => void;
 }
 
-export function SearchDropdown({ results, isVisible, onItemClick }: SearchDropdownProps) {
+export function SearchDropdown({
+  results,
+  isVisible,
+  onItemClick,
+  showRecentSearches = false,
+  onRecentSearchClick,
+  onRemoveRecentSearch
+}: SearchDropdownProps) {
+  const recentSearches = getRecentSearches();
+
+  // Show recent searches when no search term
+  if (showRecentSearches && recentSearches.length > 0) {
+    return (
+      <div className="sm:absolute sm:top-full sm:left-0 sm:right-0 sm:mt-2 bg-popover sm:border border-border sm:rounded-lg sm:shadow-lg z-50 search-dropdown w-full">
+        <div className="px-3 py-2 border-b border-border">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Recent Searches
+          </span>
+        </div>
+        {recentSearches.map((term, index) => (
+          <div
+            key={`recent-${index}`}
+            className="group flex items-center justify-between p-3 hover:bg-accent cursor-pointer border-b border-border last:border-b-0 transition-colors"
+          >
+            <div
+              className="flex items-center gap-3 flex-1 min-w-0"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onRecentSearchClick?.(term);
+              }}
+            >
+              <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-foreground truncate">{term}</span>
+            </div>
+            <button
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onRemoveRecentSearch?.(term);
+              }}
+              className="p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-muted transition-all"
+              title="Remove from recent searches"
+            >
+              <X className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (!isVisible || results.length === 0) return null;
 
   const getIcon = (mediaType: string) => {

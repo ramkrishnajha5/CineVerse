@@ -4,7 +4,7 @@ import { Link, useLocation } from 'wouter';
 import { Search, Menu, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ThemeToggle } from './ThemeToggle';
-import { SearchDropdown } from './SearchDropdown';
+import { SearchDropdown, addRecentSearch, removeRecentSearch, getRecentSearches } from './SearchDropdown';
 import { useDebounce } from '@/hooks/useDebounce';
 import { tmdbApi } from '@/lib/tmdb';
 import { SearchResult } from '@/types/tmdb';
@@ -18,10 +18,12 @@ export function Header() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchExpanded, setIsMobileSearchExpanded] = useState(false);
+  const [recentSearchesKey, setRecentSearchesKey] = useState(0); // Force re-render
   const searchRef = useRef<HTMLDivElement>(null);
-  
+
   const debouncedSearchTerm = useDebounce(searchTerm, 800);
 
   const { data: searchResults } = useQuery({
@@ -51,6 +53,7 @@ export function Header() {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setIsSearchVisible(false);
+        setIsSearchFocused(false);
         setIsMobileSearchExpanded(false);
       }
     };
@@ -67,15 +70,38 @@ export function Header() {
   }, [searchResults]);
 
   const handleSearchResultClick = (result: SearchResult) => {
+    // Save to recent searches
+    const title = result.title || result.name || '';
+    if (title) {
+      addRecentSearch(title);
+      setRecentSearchesKey(prev => prev + 1);
+    }
+
     setIsSearchVisible(false);
+    setIsSearchFocused(false);
     setSearchTerm('');
     setIsMobileSearchExpanded(false);
-    
+
     if (result.media_type === 'movie') {
       navigate(`/movie/${result.id}`);
     } else if (result.media_type === 'tv') {
       navigate(`/tv/${result.id}`);
     }
+  };
+
+  const handleRecentSearchClick = (term: string) => {
+    setSearchTerm(term);
+    setIsSearchFocused(false);
+    // Trigger a search with this term
+  };
+
+  const handleRemoveRecentSearch = (term: string) => {
+    removeRecentSearch(term);
+    setRecentSearchesKey(prev => prev + 1); // Force re-render
+  };
+
+  const handleSearchFocus = () => {
+    setIsSearchFocused(true);
   };
 
   const handleMobileSearchToggle = () => {
@@ -89,8 +115,12 @@ export function Header() {
     } else {
       setSearchTerm('');
       setIsSearchVisible(false);
+      setIsSearchFocused(false);
     }
   };
+
+  // Determine whether to show recent searches
+  const showRecentSearches = isSearchFocused && searchTerm.length === 0 && getRecentSearches().length > 0;
 
   const navItems = [
     { href: '/', label: 'Home' },
@@ -104,32 +134,31 @@ export function Header() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2" data-testid="logo-link">
-            <img 
-              src={logoImage} 
-              alt="CineVerse Logo" 
-              className="h-10 sm:h-12 lg:h-14 w-auto hover:scale-105 transition-transform" 
+            <img
+              src={logoImage}
+              alt="CineVerse Logo"
+              className="h-10 sm:h-12 lg:h-14 w-auto hover:scale-105 transition-transform"
               data-testid="logo-image"
             />
           </Link>
-          
+
           {/* Desktop Navigation - Middle */}
           <nav className="hidden lg:flex items-center space-x-8">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-lg font-medium transition-colors hover:text-primary ${
-                  location === item.href 
-                    ? 'text-primary' 
-                    : 'text-muted-foreground'
-                }`}
+                className={`text-lg font-medium transition-colors hover:text-primary ${location === item.href
+                  ? 'text-primary'
+                  : 'text-muted-foreground'
+                  }`}
                 data-testid={`nav-link-${item.label.toLowerCase()}`}
               >
                 {item.label}
               </Link>
             ))}
           </nav>
-          
+
           {/* Search Bar, Theme Toggle & Auth - Right */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Desktop Search Bar */}
@@ -140,8 +169,12 @@ export function Header() {
                   placeholder="Search movies, TV shows..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onFocus={handleSearchFocus}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && searchTerm.trim()) {
+                      // Save search term to recent searches
+                      addRecentSearch(searchTerm.trim());
+                      setRecentSearchesKey(prev => prev + 1);
                       setIsSearchVisible(true);
                     }
                   }}
@@ -150,11 +183,15 @@ export function Header() {
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               </div>
-              
+
               <SearchDropdown
+                key={recentSearchesKey}
                 results={searchResults?.results || []}
                 isVisible={isSearchVisible && searchTerm.length >= 3}
                 onItemClick={handleSearchResultClick}
+                showRecentSearches={showRecentSearches}
+                onRecentSearchClick={handleRecentSearchClick}
+                onRemoveRecentSearch={handleRemoveRecentSearch}
               />
             </div>
 
@@ -177,9 +214,11 @@ export function Header() {
                         placeholder="Search movies, TV shows..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onFocus={handleSearchFocus}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && searchTerm.trim()) {
-                            // Trigger search when Enter is pressed
+                            addRecentSearch(searchTerm.trim());
+                            setRecentSearchesKey(prev => prev + 1);
                             setIsSearchVisible(true);
                           }
                         }}
@@ -190,6 +229,8 @@ export function Header() {
                       <button
                         onClick={() => {
                           if (searchTerm.trim()) {
+                            addRecentSearch(searchTerm.trim());
+                            setRecentSearchesKey(prev => prev + 1);
                             setIsSearchVisible(true);
                           }
                         }}
@@ -205,18 +246,22 @@ export function Header() {
                       <X className="h-6 w-6" />
                     </button>
                   </div>
-                  
+
                   <div className="flex-1 overflow-y-auto">
                     <SearchDropdown
+                      key={recentSearchesKey}
                       results={searchResults?.results || []}
                       isVisible={isSearchVisible && searchTerm.length >= 3}
                       onItemClick={handleSearchResultClick}
+                      showRecentSearches={showRecentSearches}
+                      onRecentSearchClick={handleRecentSearchClick}
+                      onRemoveRecentSearch={handleRemoveRecentSearch}
                     />
                   </div>
                 </div>
               )}
             </div>
-            
+
             <ThemeToggle />
 
             {/* Auth */}
@@ -253,7 +298,7 @@ export function Header() {
                 </button>
               </div>
             )}
-            
+
             <button
               className="lg:hidden p-2 hover:bg-accent rounded-lg transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -267,7 +312,7 @@ export function Header() {
             </button>
           </div>
         </div>
-        
+
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <nav className="lg:hidden mt-4 py-4 border-t border-border">
@@ -276,11 +321,10 @@ export function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block py-2 text-lg font-medium transition-colors hover:text-primary ${
-                    location === item.href 
-                      ? 'text-primary' 
-                      : 'text-muted-foreground'
-                  }`}
+                  className={`block py-2 text-lg font-medium transition-colors hover:text-primary ${location === item.href
+                    ? 'text-primary'
+                    : 'text-muted-foreground'
+                    }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                   data-testid={`mobile-nav-link-${item.label.toLowerCase()}`}
                 >
