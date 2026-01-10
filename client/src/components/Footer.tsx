@@ -7,34 +7,35 @@ export function Footer() {
 
   const navigationLinks = [
     { href: '/', label: 'Home' },
+    { href: '/games', label: 'GameVerse' },
     { href: '/about', label: 'About Us' },
     { href: '/contact', label: 'Contact Us' },
   ];
 
   const featureLinks = [
-    { 
-      label: 'Trending Content', 
+    {
+      label: 'Trending Content',
       action: () => {
         const element = document.querySelector('[data-testid="trending-section"]');
         element?.scrollIntoView({ behavior: 'smooth' });
       }
     },
-    { 
-      label: 'Popular Trailers', 
+    {
+      label: 'Popular Trailers',
       action: () => {
         const element = document.querySelector('[data-testid="popular-trailers-section"]');
         element?.scrollIntoView({ behavior: 'smooth' });
       }
     },
-    { 
-      label: 'Regional Movies', 
+    {
+      label: 'Regional Movies',
       action: () => {
         const element = document.querySelector('[data-testid="popular-movies-by-region"]');
         element?.scrollIntoView({ behavior: 'smooth' });
       }
     },
-    { 
-      label: 'Recommendations', 
+    {
+      label: 'Recommendations',
       action: () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -42,23 +43,23 @@ export function Footer() {
   ];
 
   const socialLinks = [
-    { 
-      href: 'https://x.com', 
+    {
+      href: 'https://x.com',
       label: 'X (Twitter)',
       icon: <SiX className="w-5 h-5" />
     },
-    { 
-      href: 'https://facebook.com', 
+    {
+      href: 'https://facebook.com',
       label: 'Facebook',
       icon: <SiFacebook className="w-5 h-5" />
     },
-    { 
-      href: 'https://instagram.com', 
+    {
+      href: 'https://instagram.com',
       label: 'Instagram',
       icon: <SiInstagram className="w-5 h-5" />
     },
-    { 
-      href: 'https://youtube.com', 
+    {
+      href: 'https://youtube.com',
       label: 'YouTube',
       icon: <SiYoutube className="w-5 h-5" />
     },
@@ -75,7 +76,7 @@ export function Footer() {
               <ul className="space-y-2 text-sm">
                 {navigationLinks.map((link) => (
                   <li key={link.href}>
-                    <Link 
+                    <Link
                       href={link.href}
                       className="text-muted-foreground hover:text-primary transition-colors"
                       data-testid={`footer-nav-${link.label.toLowerCase().replace(' ', '-')}`}
@@ -86,12 +87,12 @@ export function Footer() {
                 ))}
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link 
+                  <Link
                     href="/about"
                     className="text-muted-foreground hover:text-primary transition-colors"
                     data-testid="footer-about-link"
@@ -100,7 +101,7 @@ export function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <Link 
+                  <Link
                     href="/contact"
                     className="text-muted-foreground hover:text-primary transition-colors"
                     data-testid="footer-contact-link"
@@ -109,7 +110,7 @@ export function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <a 
+                  <a
                     href="#"
                     className="text-muted-foreground hover:text-primary transition-colors"
                     data-testid="footer-privacy-link"
@@ -118,7 +119,7 @@ export function Footer() {
                   </a>
                 </li>
                 <li>
-                  <a 
+                  <a
                     href="#"
                     className="text-muted-foreground hover:text-primary transition-colors"
                     data-testid="footer-terms-link"
@@ -128,7 +129,7 @@ export function Footer() {
                 </li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Features</h3>
               <ul className="space-y-2 text-sm">
@@ -145,7 +146,7 @@ export function Footer() {
                 ))}
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-semibold mb-4">Connect</h3>
               <div className="flex space-x-4">
@@ -166,7 +167,7 @@ export function Footer() {
               </div>
             </div>
           </div>
-          
+
           {/* Copyright */}
           <div className="border-t border-border pt-8">
             <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
@@ -179,9 +180,9 @@ export function Footer() {
                   <span>Made with</span>
                   <Heart className="w-4 h-4 text-red-500 fill-current" />
                   <span>by</span>
-                  <a 
-                    href="https://www.instagram.com/ramkrishnajha5" 
-                    target="_blank" 
+                  <a
+                    href="https://www.instagram.com/ramkrishnajha5"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline font-medium transition-colors"
                   >

@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+server/serviceAccountKey.json
+*.tar.gz
+
+# Environment files (contain sensitive credentials)
+.env
+.env.local
+.env.*.local
