@@ -1,39 +1,55 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Search, Menu, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ThemeToggle } from './ThemeToggle';
 import { SearchDropdown, addRecentSearch, removeRecentSearch, getRecentSearches } from './SearchDropdown';
+import { GameSearchDropdown } from './games/GameSearch';
 import { useDebounce } from '@/hooks/useDebounce';
 import { tmdbApi } from '@/lib/tmdb';
+import { gamesApi } from '@/lib/games';
 import { SearchResult } from '@/types/tmdb';
+import { RAWGGame } from '@/types/games';
 import logoImage from '@assets/CineVerseLogo_1757144469036.png';
 import { useAuth } from '@/hooks/useAuth';
 import { getUserProfile, type UserProfile } from '@/lib/firestore';
 
 export function Header() {
   const [location, navigate] = useLocation();
-  const { user, signOutUser } = useAuth();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchExpanded, setIsMobileSearchExpanded] = useState(false);
-  const [recentSearchesKey, setRecentSearchesKey] = useState(0); // Force re-render
+  const [recentSearchesKey, setRecentSearchesKey] = useState(0);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 800);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const { data: searchResults } = useQuery({
+  // ============================================================
+  // CONTEXT-AWARE SEARCH: Games on /games pages, Movies elsewhere
+  // ============================================================
+  const isOnGamesPage = location.startsWith('/games');
+
+  // Movie search query (only when NOT on games pages)
+  const { data: movieSearchResults } = useQuery({
     queryKey: ['/search/multi', debouncedSearchTerm],
     queryFn: () => tmdbApi.searchMulti(debouncedSearchTerm),
-    enabled: debouncedSearchTerm.length >= 3,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: debouncedSearchTerm.length >= 3 && !isOnGamesPage,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Load user profile for header avatar/name
+  // Game search query (only when ON games pages)
+  const { data: gameSearchResults } = useQuery({
+    queryKey: ['games-search-header', debouncedSearchTerm],
+    queryFn: () => gamesApi.searchGames(debouncedSearchTerm),
+    enabled: debouncedSearchTerm.length >= 3 && isOnGamesPage,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Load user profile
   useEffect(() => {
     let canceled = false;
     (async () => {
@@ -48,7 +64,7 @@ export function Header() {
     return () => { canceled = true; };
   }, [user?.uid]);
 
-  // Handle click outside search to close dropdown
+  // Handle click outside search
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -64,13 +80,19 @@ export function Header() {
 
   // Show search results when we have them
   useEffect(() => {
-    if (searchResults?.results && searchResults.results.length > 0) {
-      setIsSearchVisible(true);
+    if (isOnGamesPage) {
+      if (gameSearchResults?.results && gameSearchResults.results.length > 0) {
+        setIsSearchVisible(true);
+      }
+    } else {
+      if (movieSearchResults?.results && movieSearchResults.results.length > 0) {
+        setIsSearchVisible(true);
+      }
     }
-  }, [searchResults]);
+  }, [movieSearchResults, gameSearchResults, isOnGamesPage]);
 
-  const handleSearchResultClick = (result: SearchResult) => {
-    // Save to recent searches
+  // Handle movie search result click
+  const handleMovieSearchResultClick = (result: SearchResult) => {
     const title = result.title || result.name || '';
     if (title) {
       addRecentSearch(title);
@@ -89,15 +111,23 @@ export function Header() {
     }
   };
 
+  // Handle game search result click
+  const handleGameSearchResultClick = (game: RAWGGame) => {
+    setIsSearchVisible(false);
+    setIsSearchFocused(false);
+    setSearchTerm('');
+    setIsMobileSearchExpanded(false);
+    navigate(`/games/${game.id}`);
+  };
+
   const handleRecentSearchClick = (term: string) => {
     setSearchTerm(term);
     setIsSearchFocused(false);
-    // Trigger a search with this term
   };
 
   const handleRemoveRecentSearch = (term: string) => {
     removeRecentSearch(term);
-    setRecentSearchesKey(prev => prev + 1); // Force re-render
+    setRecentSearchesKey(prev => prev + 1);
   };
 
   const handleSearchFocus = () => {
@@ -107,7 +137,6 @@ export function Header() {
   const handleMobileSearchToggle = () => {
     setIsMobileSearchExpanded(!isMobileSearchExpanded);
     if (!isMobileSearchExpanded) {
-      // Focus on the input when expanding
       setTimeout(() => {
         const input = searchRef.current?.querySelector('input');
         input?.focus();
@@ -119,11 +148,16 @@ export function Header() {
     }
   };
 
-  // Determine whether to show recent searches
-  const showRecentSearches = isSearchFocused && searchTerm.length === 0 && getRecentSearches().length > 0;
+  const showRecentSearches = isSearchFocused && searchTerm.length === 0 && getRecentSearches().length > 0 && !isOnGamesPage;
+
+  // Dynamic placeholder based on context
+  const searchPlaceholder = isOnGamesPage
+    ? "Search games..."
+    : "Search movies, TV shows...";
 
   const navItems = [
     { href: '/', label: 'Home' },
+    { href: '/games', label: 'GameVerse' },
     { href: '/about', label: 'About' },
     { href: '/contact', label: 'Contact' },
   ];
@@ -142,13 +176,13 @@ export function Header() {
             />
           </Link>
 
-          {/* Desktop Navigation - Middle */}
+          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-lg font-medium transition-colors hover:text-primary ${location === item.href
+                className={`text-lg font-medium transition-colors hover:text-primary ${location === item.href || (item.href !== '/' && location.startsWith(item.href))
                   ? 'text-primary'
                   : 'text-muted-foreground'
                   }`}
@@ -159,44 +193,55 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Search Bar, Theme Toggle & Auth - Right */}
+          {/* Search Bar, Theme Toggle & Auth */}
           <div className="flex items-center space-x-2 sm:space-x-4">
-            {/* Desktop Search Bar */}
+            {/* Desktop Search Bar - Context-Aware */}
             <div className="hidden sm:block relative max-w-sm" ref={searchRef}>
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search movies, TV shows..."
+                  placeholder={searchPlaceholder}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onFocus={handleSearchFocus}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && searchTerm.trim()) {
-                      // Save search term to recent searches
-                      addRecentSearch(searchTerm.trim());
-                      setRecentSearchesKey(prev => prev + 1);
+                      if (!isOnGamesPage) {
+                        addRecentSearch(searchTerm.trim());
+                        setRecentSearchesKey(prev => prev + 1);
+                      }
                       setIsSearchVisible(true);
                     }
                   }}
                   className="w-full px-4 py-2 pl-10 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
                   data-testid="search-input"
                 />
+                {/* Search icon */}
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               </div>
 
-              <SearchDropdown
-                key={recentSearchesKey}
-                results={searchResults?.results || []}
-                isVisible={isSearchVisible && searchTerm.length >= 3}
-                onItemClick={handleSearchResultClick}
-                showRecentSearches={showRecentSearches}
-                onRecentSearchClick={handleRecentSearchClick}
-                onRemoveRecentSearch={handleRemoveRecentSearch}
-              />
+              {/* Context-aware search dropdown */}
+              {isOnGamesPage ? (
+                <GameSearchDropdown
+                  results={gameSearchResults?.results || []}
+                  isVisible={isSearchVisible && searchTerm.length >= 3}
+                  onItemClick={handleGameSearchResultClick}
+                />
+              ) : (
+                <SearchDropdown
+                  key={recentSearchesKey}
+                  results={movieSearchResults?.results || []}
+                  isVisible={isSearchVisible && searchTerm.length >= 3}
+                  onItemClick={handleMovieSearchResultClick}
+                  showRecentSearches={showRecentSearches}
+                  onRecentSearchClick={handleRecentSearchClick}
+                  onRemoveRecentSearch={handleRemoveRecentSearch}
+                />
+              )}
             </div>
 
             {/* Mobile Search Icon/Bar */}
-            <div className="sm:hidden relative" ref={searchRef}>
+            <div className="sm:hidden relative" ref={!isMobileSearchExpanded ? undefined : searchRef}>
               {!isMobileSearchExpanded ? (
                 <button
                   onClick={handleMobileSearchToggle}
@@ -211,14 +256,16 @@ export function Header() {
                     <div className="relative flex-1">
                       <input
                         type="text"
-                        placeholder="Search movies, TV shows..."
+                        placeholder={searchPlaceholder}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onFocus={handleSearchFocus}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && searchTerm.trim()) {
-                            addRecentSearch(searchTerm.trim());
-                            setRecentSearchesKey(prev => prev + 1);
+                            if (!isOnGamesPage) {
+                              addRecentSearch(searchTerm.trim());
+                              setRecentSearchesKey(prev => prev + 1);
+                            }
                             setIsSearchVisible(true);
                           }
                         }}
@@ -229,8 +276,10 @@ export function Header() {
                       <button
                         onClick={() => {
                           if (searchTerm.trim()) {
-                            addRecentSearch(searchTerm.trim());
-                            setRecentSearchesKey(prev => prev + 1);
+                            if (!isOnGamesPage) {
+                              addRecentSearch(searchTerm.trim());
+                              setRecentSearchesKey(prev => prev + 1);
+                            }
                             setIsSearchVisible(true);
                           }
                         }}
@@ -248,15 +297,23 @@ export function Header() {
                   </div>
 
                   <div className="flex-1 overflow-y-auto">
-                    <SearchDropdown
-                      key={recentSearchesKey}
-                      results={searchResults?.results || []}
-                      isVisible={isSearchVisible && searchTerm.length >= 3}
-                      onItemClick={handleSearchResultClick}
-                      showRecentSearches={showRecentSearches}
-                      onRecentSearchClick={handleRecentSearchClick}
-                      onRemoveRecentSearch={handleRemoveRecentSearch}
-                    />
+                    {isOnGamesPage ? (
+                      <GameSearchDropdown
+                        results={gameSearchResults?.results || []}
+                        isVisible={isSearchVisible && searchTerm.length >= 3}
+                        onItemClick={handleGameSearchResultClick}
+                      />
+                    ) : (
+                      <SearchDropdown
+                        key={recentSearchesKey}
+                        results={movieSearchResults?.results || []}
+                        isVisible={isSearchVisible && searchTerm.length >= 3}
+                        onItemClick={handleMovieSearchResultClick}
+                        showRecentSearches={showRecentSearches}
+                        onRecentSearchClick={handleRecentSearchClick}
+                        onRemoveRecentSearch={handleRemoveRecentSearch}
+                      />
+                    )}
                   </div>
                 </div>
               )}
@@ -321,7 +378,7 @@ export function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block py-2 text-lg font-medium transition-colors hover:text-primary ${location === item.href
+                  className={`block py-2 text-lg font-medium transition-colors hover:text-primary ${location === item.href || (item.href !== '/' && location.startsWith(item.href))
                     ? 'text-primary'
                     : 'text-muted-foreground'
                     }`}

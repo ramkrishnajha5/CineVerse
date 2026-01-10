@@ -15,6 +15,8 @@ import Dashboard from "./pages/Dashboard";
 import Movies from "./pages/Movies";
 import Series from "./pages/Series";
 import PersonDetail from "./pages/PersonDetail";
+import Games from "./pages/Games";
+import GameDetail from "./pages/GameDetail";
 import { ScrollToTop } from "@/components/ScrollToTop";
 
 function Router() {
@@ -29,6 +31,8 @@ function Router() {
         <Route path="/person/:id" component={PersonDetail} />
         <Route path="/movies" component={Movies} />
         <Route path="/series" component={Series} />
+        <Route path="/games" component={Games} />
+        <Route path="/games/:id" component={GameDetail} />
         <Route path="/dashboard">
           <RequireAuth>
             <Dashboard />
