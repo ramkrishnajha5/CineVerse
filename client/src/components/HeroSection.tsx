@@ -65,8 +65,8 @@ export function HeroSection() {
       {/* Background overlay for text readability */}
       <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]"></div>
 
-      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-display font-bold mb-6 whitespace-nowrap">
+      <div className="relative z-10 text-center px-4 w-full flex flex-col items-center justify-center">
+        <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-display font-bold mb-6 whitespace-nowrap w-full overflow-visible">
           <span className="hero-gradient-text" data-testid="hero-title">
             {display}
             <span className="inline-block w-[1ch] ml-1 align-baseline animate-pulse">|</span>

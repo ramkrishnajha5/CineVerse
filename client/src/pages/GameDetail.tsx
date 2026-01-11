@@ -105,17 +105,19 @@ export default function GameDetail() {
                         backgroundPosition: 'center top',
                     }}
                 >
+                    {/* Back Button - Top Left with Blue Border */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="absolute top-4 left-4 text-white bg-black/30 backdrop-blur-sm border border-blue-500 hover:bg-blue-500/20 hover:border-blue-400"
+                        onClick={() => navigate('/games')}
+                        data-testid="back-button"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-1" />
+                        Back
+                    </Button>
+
                     <div className="container mx-auto px-4 pb-8 pt-24">
-                        {/* Back Button */}
-                        <Button
-                            variant="ghost"
-                            className="mb-6 text-white hover:bg-white/10"
-                            onClick={() => navigate('/games')}
-                            data-testid="back-button"
-                        >
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back to Games
-                        </Button>
 
                         {/* Title with Gradient - same as movie title */}
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-4 drop-shadow-lg" data-testid="game-title">
@@ -141,14 +143,14 @@ export default function GameDetail() {
                             )}
 
                             {releaseYear && (
-                                <div className="flex items-center bg-white/20 text-white px-3 py-1.5 rounded-full backdrop-blur">
+                                <div className="flex items-center bg-gray-800/80 text-white px-3 py-1.5 rounded-full backdrop-blur">
                                     <Calendar className="w-4 h-4 mr-1" />
                                     <span>{releaseYear}</span>
                                 </div>
                             )}
 
                             {playtime > 0 && (
-                                <div className="flex items-center bg-white/20 text-white px-3 py-1.5 rounded-full backdrop-blur">
+                                <div className="flex items-center bg-gray-800/80 text-white px-3 py-1.5 rounded-full backdrop-blur">
                                     <Clock className="w-4 h-4 mr-1" />
                                     <span>{formatPlaytime(playtime)}</span>
                                 </div>
@@ -159,7 +161,7 @@ export default function GameDetail() {
                         {platforms.length > 0 && (
                             <div className="flex flex-wrap gap-2">
                                 {platforms.map((platform, idx) => (
-                                    <Badge key={idx} variant="secondary" className="bg-white/20 text-white backdrop-blur border-0">
+                                    <Badge key={idx} variant="secondary" className="bg-gray-800/80 text-white backdrop-blur border-0">
                                         <Monitor className="w-3 h-3 mr-1" />
                                         {platform}
                                     </Badge>
